@@ -1,0 +1,13 @@
+speech_recognition 
+requests
+smtplib
+schedule
+datetime
+wikipedia
+webbrowser
+time
+os
+pywhatkit
+json
+threading
+dotenv
