@@ -51,9 +51,11 @@ def wait_for_wake_word():
 
 #active mode
 def active_mode():
-    schedule.run_pending()
+    
     while True:
+        schedule.run_pending()
         command = listen()
+        time.sleep(0.3)
         if command == "":
             continue
 
@@ -142,7 +144,7 @@ def detect_intent(command):
         return "exit"
     elif "play" in command:
         return "play_music"
-    elif "thanks" or "thank" in command:
+    elif "thanks" in command or "thank " in command:
         return "thank_you"
     else:
         return "unknown"
@@ -213,7 +215,7 @@ def open_app(app_name):
         speak("Opening phone")
     elif "vscode" in app_name or "code" in app_name or "playground" in app_name:
         os.system("open -a 'Visual Studio Code'")
-        speak(f"Opening {app_name}")
+        speak("Opening Visual Studio Code")
     elif "youtube" in app_name:
         webbrowser.open("https://youtube.com")
         speak("Opening YouTube")
