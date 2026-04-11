@@ -4,9 +4,11 @@ import schedule
 import wikipedia
 import os
 import pywhatkit
+import json
 from modules.speech import speak
 
-
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+MEMORY_FILE = os.path.join(BASE_DIR, "data", "memory.json")
 
 API_KEY = os.getenv("OPENWEATHER_API_KEY")
 def get_weather(city):
@@ -37,30 +39,44 @@ def set_reminder(message):
 
 #open app
 def open_app(app_name):
-    if "brave" in app_name:
-        os.system("open -a 'Brave Browser'")
-        speak("Opening brave")
-    elif "safari" in app_name:
-        os.system("open -a Safari")
-        speak("Opening safari")
-    elif "finder" in app_name:
-        os.system("open -a Finder")
-        speak("Opening finder")
-    elif "calculator" in app_name:
-        os.system("open -a Calculator")
-        speak("Opening calculator")
-    elif "phone" in app_name:
-        os.system("open -a Phone")
-        speak("Opening phone")
-    elif "vscode" in app_name or "code" in app_name or "playground" in app_name:
-        os.system("open -a 'Visual Studio Code'")
-        speak("Opening Visual Studio Code")
-    elif "youtube" in app_name:
-        webbrowser.open("https://youtube.com")
-        speak("Opening YouTube")
+    app_name = app_name.replace("open", "").replace("lunch", "").strip()
+    aliases = {
+        "vscode": "Visual Studio Code",
+        "code" : "Visual Studio Code",
+        "brave": "Brave Browser",
+        "yt": "YouTube",
+        "powerpoint": "Microsoft PowerPoint",
+        "words": "Microsoft Word",
+        "excel": "Microsoft Excel",
+        "colab": "Google Colab",
+        "whatsapp": "WhatsApp"
+    }
+    app_name = aliases.get(app_name.lower(), app_name.title())
+    result = os.system(f"open -a '{app_name}'")
+    if result == 0:
+        speak(f"Opening {app_name}")
     else:
-        speak("I don't know that application")
+        speak(f"Sorry, I couldn't find {app_name}")
 
+def close_app(app_name):
+    app_name = app_name.replace("close", "").replace("quit", "").replace("exit", "").strip()
+    aliases = {
+        "vscode": "Visual Studio Code",
+        "code" : "Visual Studio Code",
+        "brave": "Brave Browser",
+        "yt": "YouTube",
+        "powerpoint": "Microsoft PowerPoint",
+        "words": "Microsoft Word",
+        "excel": "Microsoft Excel",
+        "colab": "Google Colab",
+        "whatsapp": "WhatsApp"
+    }
+    app_name = aliases.get(app_name.lower(), app_name.title())
+    result = os.system(f"osascript -e 'quit app \"{app_name}\"'")
+    if result == 0:
+        speak(f"Closing {app_name}")
+    else:
+        speak(f"Sorry, I couldn't close {app_name}")
 #play music,vedio
 def play_music(query):
     speak(f"Playing {query} on Youtube")
@@ -73,3 +89,26 @@ def answer_question(query):
         speak(result)
     except:
         speak("sorry, i could not find anything")
+
+def ask_ollama(prompt):
+    try:
+        response = requests.post("http://localhost:11434/api/generate", json={"model": "mistral", "prompt":prompt,"stream": False})
+        data = response.json()
+        return data["response"]
+    except Exception as e:
+        return "Sorry, I couldn't connect to AI."
+    
+def load_memory():
+    try:
+        with open(MEMORY_FILE, "r") as f:
+            return json.load(f)
+    except:
+        return {}
+def save_memory(key, value):
+    data = load_memory()
+    data[key] = value
+    with open(MEMORY_FILE, "w") as f:
+        json.dump(data,f)
+def get_memory(key):
+    data = load_memory()
+    return data.get(key)

@@ -9,5 +9,5 @@ def wait_for_wake_word():
            continue
        print("Heard:",command)
        if WAKE_WORD in command:
-        speak("Yes mousam, how can i help you?")
+        speak("Yes sir, how can i help you?")
         return

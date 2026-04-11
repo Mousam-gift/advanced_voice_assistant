@@ -5,10 +5,10 @@ import schedule
 from modules.speech import speak, listen
 from modules.intent import detect_intent
 from modules.email_module import send_email, contacts
-from modules.features import get_weather, google_search, set_reminder, open_app, play_music
+from modules.features import get_weather, google_search, set_reminder, open_app, close_app, play_music
 from modules.features import answer_question
-
-
+from modules.features import ask_ollama
+from modules.features import save_memory, get_memory
 def active_mode():
     
     while True:
@@ -16,6 +16,20 @@ def active_mode():
         command = listen()
         time.sleep(0.3)
         if command == "":
+            continue
+        #save name
+        if "my name is" in command:
+            name = command.replace("my name is ", "").strip()
+            save_memory("name", name)
+            speak(f"Nice to meet you {name}")
+            continue
+        #recall name
+        if "what is my name" in command:
+            name = get_memory("name")
+            if name:
+                speak(f"Your name is {name}")
+            else:
+                speak("I don't know your name yet.")
             continue
 
         if "sleep" in command:
@@ -43,15 +57,14 @@ def active_mode():
             speak("What should I say?")
             message = listen()
             send_email(receiver,message)
-
-        elif intent == "knowledge":
-            answer_question(command)
-
         elif intent == "greeting":
-            speak("Hello Mousam! How can I help you?")
+            speak("Hello! How can I help you?")
 
         elif intent == "open_app":
             open_app(command)
+
+        elif intent == "close_app":
+            close_app(command)
 
         elif intent == "time":
             now = datetime.datetime.now().strftime("%I:%M %p")
@@ -80,4 +93,13 @@ def active_mode():
             os._exit(0)
 
         else:
-            speak("i don't understand")
+            speak("let me think...")
+            try:
+                response = ask_ollama(f"""
+                You are NOVA, a smart AI voice assistant.
+                Reply in 1-2 short sentences only.
+                Be clear, helpful, and conversational.
+                User: {command}""")
+                speak(response)
+            except Exception :
+                speak("Sorry, I couldn't connect to AI.")

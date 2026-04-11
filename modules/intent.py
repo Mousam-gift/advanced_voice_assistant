@@ -7,8 +7,8 @@ def detect_intent(command):
         return "email"
     elif "reminder" in command:
         return "reminder"
-    elif "who is" in command or "what is" in command  or "tell me about" in command:
-        return "knowledge"
+    elif "close" in command or "quit" in command:
+        return "close_app"
     elif "open" in command:
         return "open_app"
     elif "time" in command:
