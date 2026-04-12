@@ -35,11 +35,14 @@ def google_search(query):
 #reminder section 
 def set_reminder(message):
     speak("reminder set")
-    schedule.every(1).minutes.do(lambda: speak(message))
+    def remind():
+        speak(message)
+        return schedule.CancelJob
+    schedule.every(1).minutes.do(remind)
 
 #open app
 def open_app(app_name):
-    app_name = app_name.replace("open", "").replace("lunch", "").strip()
+    app_name = app_name.replace("open", "").replace("launch", "").strip()
     aliases = {
         "vscode": "Visual Studio Code",
         "code" : "Visual Studio Code",
@@ -83,19 +86,31 @@ def play_music(query):
     pywhatkit.playonyt(query)
 
 #general knowledge
-def answer_question(query):
-    try:
-        result = wikipedia.summary(query, sentences=2)
-        speak(result)
-    except:
-        speak("sorry, i could not find anything")
+# def answer_question(query):
+#     try:
+#         result = wikipedia.summary(query, sentences=2)
+#         speak(result)
+#     except:
+#         speak("sorry, i could not find anything")
 
-def ask_ollama(prompt):
+def ask_ollama(prompt, history=None):
+    if history is None:
+        history = []
     try:
-        response = requests.post("http://localhost:11434/api/generate", json={"model": "mistral", "prompt":prompt,"stream": False})
+        history_text = "\n".join([f"User: {h['user']}\nNova: {h['assistant']}"for h in history])
+
+        full_prompt = f"""You are NOVA, a smart AI voice assistant.
+Reply in 1-2 short sentences only.
+Be clear, helpful, and conversational.
+Previous conversation:
+{history_text}
+
+User: {prompt}"""
+        response = requests.post("http://localhost:11434/api/generate", json={"model": "mistral", "prompt":full_prompt,"stream": False,"keep_alive": -1}, timeout=30)
         data = response.json()
-        return data["response"]
+        return data["response"].strip()
     except Exception as e:
+        print("Error connecting to Ollama:", e)
         return "Sorry, I couldn't connect to AI."
     
 def load_memory():
@@ -112,3 +127,51 @@ def save_memory(key, value):
 def get_memory(key):
     data = load_memory()
     return data.get(key)
+
+#music control
+def music_control(command):
+    if "youtube" in command:
+        if "pause" in command or "resume" in command:
+            os.system("osascript -e 'tell application \"System Events\" to key code 49'") #spacebar
+            speak("Done")
+        elif "next" in command:
+            os.system("osascript -e 'tell application \"System Events\" to key code 124'")
+            speak("next song") #right arrow
+        elif "previous" in command or "back" in command:
+            os.system("osascript -e 'tell application \"System Events\" to key code 123'")
+            speak("previous song") #left arrow
+        elif "volume up" in command or "louder" in command or "up" in command:
+            os.system("osascript -e 'set volume output volume (output volume of (get volume settings) + 30)'")
+            speak("volume up") #up arrow
+        elif "volume down" in command or "low" in command or "down" in command:
+            os.system("osascript -e 'set volume output volume (output volume of (get volume settings) - 30)'") #down arrow
+            speak("volume down")
+        elif "unmute" in command:
+            os.system("osascript -e 'set volume output muted false'")
+            speak("unmuted")
+        elif "mute" in command:
+            os.system("osascript -e 'set volume output muted true'")
+            speak("muted")
+        
+    else:
+        if "pause" in command:
+            os.system("osascript -e 'tell application \"Music\" to pause'")
+            speak("music paused")
+        elif "resume" in command:
+            os.system("osascript -e 'tell application \"Music\" to play'")
+            speak("music playing")
+        elif "next" in command:
+            os.system("osascript -e 'tell application \"Music\" to next track'")
+            speak("next song")
+        elif "previous" in command or "back" in command:
+            os.system("osascript -e 'tell application \"Music\" to previous track'")
+            speak("previous song")
+        elif "volume up" in command or "louder" in command or "up" in command:
+            os.system("osascript -e 'tell application \"Music\" to set sound volume to (sound volume of application \"Music\") +30'")
+            speak("volume up")
+        elif "volume down" in command or "low" in command or "down" in command:
+            os.system("osascript -e 'tell application \"Music\" to set sound volume to (sound volume of application \"Music\") -30'")
+            speak("volume down")
+        elif "mute" in command:
+            os.system("osascript -e 'tell application \"Music\" to set sound volume to 0'")
+            speak("muted")

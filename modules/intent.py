@@ -15,8 +15,10 @@ def detect_intent(command):
         return "time"
     elif "google" in command or "search" in command:
         return "google_search"
-    elif "exit" in command or "stop" in command:
+    elif "exit" in command or "stop" in command or "shutdown" in command:
         return "exit"
+    elif any(word in command for word in ["resume", "pause", "next", "previous", "back", "mute", "unmute", "volume up", "volume down", "louder"]):
+        return "music_control"
     elif "play" in command:
         return "play_music"
     elif "thanks" in command or "thank " in command:

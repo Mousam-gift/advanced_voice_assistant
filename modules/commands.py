@@ -5,10 +5,11 @@ import schedule
 from modules.speech import speak, listen
 from modules.intent import detect_intent
 from modules.email_module import send_email, contacts
-from modules.features import get_weather, google_search, set_reminder, open_app, close_app, play_music
-from modules.features import answer_question
-from modules.features import ask_ollama
-from modules.features import save_memory, get_memory
+from modules.features import get_weather, google_search, set_reminder, open_app, close_app, play_music, save_memory, get_memory, ask_ollama, music_control
+
+
+conversation_history = []
+
 def active_mode():
     
     while True:
@@ -88,18 +89,21 @@ def active_mode():
             song = command.replace("play", "")
             play_music(song)
 
+        elif intent == "music_control":
+            music_control(command)
+
         elif intent == "exit":
+            conversation_history.clear()
             speak("Shutting down the session. goodbye!")
             os._exit(0)
 
         else:
             speak("let me think...")
             try:
-                response = ask_ollama(f"""
-                You are NOVA, a smart AI voice assistant.
-                Reply in 1-2 short sentences only.
-                Be clear, helpful, and conversational.
-                User: {command}""")
+                response = ask_ollama(command, conversation_history)
+                conversation_history.append({"user": command, "assistant":response})
+                if len(conversation_history)>10:
+                    conversation_history.pop(0)
                 speak(response)
             except Exception :
-                speak("Sorry, I couldn't connect to AI.")
+                speak("Sorry, I couldn't connect to A I.")
