@@ -1,7 +1,6 @@
 import requests
 import webbrowser
 import schedule
-import wikipedia
 import os
 import pywhatkit
 import json
@@ -42,7 +41,7 @@ def set_reminder(message):
 
 #open app
 def open_app(app_name):
-    app_name = app_name.replace("open", "").replace("launch", "").strip()
+    app_name = app_name.replace("open", "").replace("launch", "").replace("app", "").strip()
     aliases = {
         "vscode": "Visual Studio Code",
         "code" : "Visual Studio Code",
@@ -62,7 +61,7 @@ def open_app(app_name):
         speak(f"Sorry, I couldn't find {app_name}")
 
 def close_app(app_name):
-    app_name = app_name.replace("close", "").replace("quit", "").replace("exit", "").strip()
+    app_name = app_name.replace("close", "").replace("quit", "").replace("exit", "").replace("app", "").strip()
     aliases = {
         "vscode": "Visual Studio Code",
         "code" : "Visual Studio Code",
@@ -73,6 +72,7 @@ def close_app(app_name):
         "excel": "Microsoft Excel",
         "colab": "Google Colab",
         "whatsapp": "WhatsApp"
+
     }
     app_name = aliases.get(app_name.lower(), app_name.title())
     result = os.system(f"osascript -e 'quit app \"{app_name}\"'")
