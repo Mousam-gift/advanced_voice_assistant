@@ -4,7 +4,25 @@ import schedule
 import os
 import pywhatkit
 import json
+import threading
+import subprocess
+import re
+import time
+import datetime
 from modules.speech import speak
+
+APP_ALIASES = {
+    "vscode": "Visual Studio Code",
+    "code": "Visual Studio Code",
+    "brave": "Brave Browser",
+    "yt": "YouTube",
+    "powerpoint": "Microsoft PowerPoint",
+    "word": "Microsoft Word",
+    "words": "Microsoft Word",
+    "excel": "Microsoft Excel",
+    "colab": "Google Colab",
+    "whatsapp": "WhatsApp",
+}
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MEMORY_FILE = os.path.join(BASE_DIR, "data", "memory.json")
@@ -12,8 +30,12 @@ MEMORY_FILE = os.path.join(BASE_DIR, "data", "memory.json")
 API_KEY = os.getenv("OPENWEATHER_API_KEY")
 def get_weather(city):
     url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={API_KEY}&units=metric"
-    response = requests.get(url)
-    data = response.json()
+    try:
+        response = requests.get(url)
+        data = response.json()
+    except requests.exceptions.RequestException:
+        speak("Sorry, I couldn't connect to the internet.")
+        return
     #print("API RESPONSE:", data)   
 
     if str(data["cod"]) != "200":
@@ -39,47 +61,29 @@ def set_reminder(message):
         return schedule.CancelJob
     schedule.every(1).minutes.do(remind)
 
+def _resolved_app_name(raw: str, strip_words: list[str]) -> str | None:
+    pattern = r'\b(?:' + '|'.join(strip_words) + r')\b'
+    cleaned = re.sub(pattern, '', raw, flags=re.IGNORECASE).strip()
+    return APP_ALIASES.get(cleaned.lower(), cleaned if cleaned else None)
+
 #open app
-def open_app(app_name):
-    app_name = app_name.replace("open", "").replace("launch", "").replace("app", "").strip()
-    aliases = {
-        "vscode": "Visual Studio Code",
-        "code" : "Visual Studio Code",
-        "brave": "Brave Browser",
-        "yt": "YouTube",
-        "powerpoint": "Microsoft PowerPoint",
-        "words": "Microsoft Word",
-        "excel": "Microsoft Excel",
-        "colab": "Google Colab",
-        "whatsapp": "WhatsApp"
-    }
-    app_name = aliases.get(app_name.lower(), app_name.title())
-    result = os.system(f"open -a '{app_name}'")
-    if result == 0:
-        speak(f"Opening {app_name}")
-    else:
-        speak(f"Sorry, I couldn't find {app_name}")
+def open_app(app_name: str):
+    resolved = _resolved_app_name(app_name, ["open", "launch", "start"])
+    if not resolved:
+        speak("Sorry, I couldn't determine which app to open.")
+        return
+    result = os.system(f"open -a '{resolved}'")
+    speak(f"Opening {resolved}" if result == 0 else f"Sorry, I couldn't open {resolved}")
 
-def close_app(app_name):
-    app_name = app_name.replace("close", "").replace("quit", "").replace("exit", "").replace("app", "").strip()
-    aliases = {
-        "vscode": "Visual Studio Code",
-        "code" : "Visual Studio Code",
-        "brave": "Brave Browser",
-        "yt": "YouTube",
-        "powerpoint": "Microsoft PowerPoint",
-        "words": "Microsoft Word",
-        "excel": "Microsoft Excel",
-        "colab": "Google Colab",
-        "whatsapp": "WhatsApp"
+def close_app(app_name: str):
+    resolved = _resolved_app_name(app_name, ["close", "quit", "exit"])
+    if not resolved:
+        speak("Sorry, I couldn't determine which app to close.")
+        return
+    result = os.system(f"osascript -e 'quit app \"{resolved}\"'")
+    speak(f"Closing {resolved}" if result == 0 else f"Sorry, I couldn't close {resolved}")
 
-    }
-    app_name = aliases.get(app_name.lower(), app_name.title())
-    result = os.system(f"osascript -e 'quit app \"{app_name}\"'")
-    if result == 0:
-        speak(f"Closing {app_name}")
-    else:
-        speak(f"Sorry, I couldn't close {app_name}")
+
 #play music,vedio
 def play_music(query):
     speak(f"Playing {query} on Youtube")
@@ -117,13 +121,15 @@ def load_memory():
     try:
         with open(MEMORY_FILE, "r") as f:
             return json.load(f)
-    except:
+    except (FileNotFoundError, json.JSONDecodeError):
         return {}
+    
 def save_memory(key, value):
     data = load_memory()
     data[key] = value
     with open(MEMORY_FILE, "w") as f:
         json.dump(data,f)
+
 def get_memory(key):
     data = load_memory()
     return data.get(key)
@@ -175,3 +181,44 @@ def music_control(command):
         elif "mute" in command:
             os.system("osascript -e 'tell application \"Music\" to set sound volume to 0'")
             speak("muted")
+
+def take_screenshot():
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = os.path.expanduser(f"~/Desktop/screenshot_{timestamp}.png")
+    result = os.system(f"screencapture -x '{filename}'")
+    if result == 0:
+        speak(f"Screenshot saved on Desktop as {timestamp}")
+    else:
+        speak("Sorry, failed to take screenshot")
+
+def shutdown_mac():
+    os.system("osascript -e 'tell app \"System Events\" to shut down'")
+
+def restart_mac():
+    os.system("osascript -e 'tell app \"System Events\" to restart'")
+
+def set_timer(command: str):
+    match = re.search(r'(\d+)\s*(seconds?|minutes?|hours?)', command, re.IGNORECASE)
+    if not match:
+        speak("Sorry, I couldn't understand the timer duration.")
+        return
+    
+    amount = int(match.group(1))
+    unit = match.group(2).lower().rstrip('s')  # Normalize to singular
+    if "second" in unit:
+        seconds = amount
+    elif "minute" in unit:
+        seconds = amount * 60
+    elif "hour" in unit:
+        seconds = amount * 3600
+
+    label = f"{amount} {unit}{'s' if amount > 1 else ''}"
+
+    speak(f"Timer set for {label}")
+
+    def _run():
+        threading.Event().wait(seconds)
+        subprocess.run(["osascript", "-e",f'display notification \"Your {label} timer is done!\" with title \"NOVA Timer\" sound name "Glass"'])
+        time.sleep(1)
+        speak(f"Time's up! Timer for {label} is done!")
+    threading.Thread(target=_run, daemon=True).start()

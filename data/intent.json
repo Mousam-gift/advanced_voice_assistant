@@ -90,6 +90,9 @@
                 "open powerpoint",
                 "open word",
                 "open whatsapp",
+                "open WhatsApp",
+                "launch WhatsApp",
+                
                 "launch whatsapp",
                 "open chrome",
                 "open spotify",
@@ -107,6 +110,8 @@
                 "close safari",
                 "close music",
                 "quit whatsapp",
+                "close whatsapp",
+                "close WhatsApp",
                 "close brave",
                 "exit application",
                 "close the app",
@@ -119,7 +124,6 @@
                 "close chrome",
                 "close spotify",
                 "close notes",
-                "shut down the app",
                 "close terminal",
                 "quit terminal"
             ]
@@ -233,13 +237,78 @@
                 "stop",
                 "exit",
                 "quit nova",
-                "shutdown",
                 "band karo",
                 "bye bye",
                 "close nova",
                 "turn off",
                 "see you",
                 "good night"
+            ]
+        },
+        {
+            "tag": "screenshot",
+            "examples": [
+                "take a screenshot",
+                "capture the screen",
+                "screenshot",
+                "screen capture",
+                "take a screen shot",
+                "capture screenshot",
+                "take a picture of the screen",
+                "screenshot please",
+                "capture the current screen",
+                "take a snapshot of the screen"
+            ]
+        },
+        {
+            "tag": "timer",
+            "examples": [
+                "set a timer",
+                "start a timer",
+                "timer for 10 minutes",
+                "set a 5 minute timer",
+                "countdown for 30 seconds",
+                "set a 1 hour timer",
+                "timer 10 minutes",
+                "start timer for 5 minutes",
+                "set timer for 2 hours",
+                "10 minute timer",
+                "30 second timer",
+                "1 hour timer",
+                "set timer"
+            ]
+        },
+        {
+            "tag": "shutdown",
+            "examples": [
+                "shut down the computer",
+                "turn off the computer",
+                "power off",
+                "shutdown",
+                "shut down",
+                "turn off",
+                "power down",
+                "shut down the system",
+                "turn off the system",
+                "power off the system",
+                "shut down now",
+                "turn off now",
+                "power off now"
+            ]
+        },
+        {
+            "tag": "restart",
+            "examples": [
+                "restart the computer",
+                "reboot the system",
+                "restart now",
+                "reboot now",
+                "restart the system",
+                "reboot the computer",
+                "restart my pc",
+                "reboot my pc",
+                "restart the machine",
+                "reboot the machine"
             ]
         },
         {

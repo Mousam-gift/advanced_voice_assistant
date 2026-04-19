@@ -5,7 +5,7 @@ import schedule
 from modules.speech import speak, listen
 from modules.intent import detect_intent
 from modules.email_module import send_email, contacts
-from modules.features import get_weather, google_search, set_reminder, open_app, close_app, play_music, save_memory, get_memory, ask_ollama, music_control
+from modules.features import get_weather, google_search, set_reminder, open_app, close_app, play_music, save_memory, get_memory, ask_ollama, music_control, take_screenshot, shutdown_mac, restart_mac, set_timer
 
 
 conversation_history = []
@@ -91,6 +91,26 @@ def active_mode():
 
         elif intent == "music_control":
             music_control(command)
+
+        elif intent == "screenshot":
+            take_screenshot()
+
+        elif intent == "shutdown":
+            speak("are you sure you want to shut down the system?")
+            if "yes" in listen():
+                shutdown_mac()
+            else:
+                speak("shutdown cancelled")
+        
+        elif intent == "timer":
+            set_timer(command)
+
+        elif intent == "restart":
+            speak("are you sure you want to restart the system?")
+            if "yes" in listen():
+                restart_mac()
+            else:
+                speak("restart cancelled")
 
         elif intent == "exit":
             conversation_history.clear()
