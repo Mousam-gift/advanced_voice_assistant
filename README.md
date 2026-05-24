@@ -1,4 +1,3 @@
-
 # 🎙️ Advanced AI Voice Assistant (NOVA)
 
 An intelligent voice-controlled assistant built using Python with local AI (Mistral via Ollama), wake word detection, and system automation.
